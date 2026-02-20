@@ -31,7 +31,6 @@ fn vs_main(
 
     var out : VertexOut;
     if (!alive) {
-        // Off-screen for dead particles
         out.pos = vec4(0.0, 0.0, -2.0, 1.0);
         out.uv = vec2(0.0);
         out.temperature = 0.0;
@@ -43,9 +42,9 @@ fn vs_main(
     let temp = clamp(p.temperature, 0.0, 2.0);
     let age_ratio = clamp(p.age / p.life, 0.0, 1.0);
 
-    // Size: hotter = smaller bright core, cooler = larger smoke
-    // Base size grows as particle cools
-    let base_size = mix(3.0, 12.0, 1.0 - temp * 0.5) * params.particle_scale;
+    // Hot particles = tiny bright pinpoints, cool = larger diffuse smoke
+    let t_norm = clamp(temp, 0.0, 1.0);
+    let base_size = mix(8.0, 1.5, t_norm * t_norm) * params.particle_scale;
 
     let corner = QUAD_POS[vid];
     let world_pos = p.pos + corner * base_size;
@@ -53,8 +52,8 @@ fn vs_main(
     let clip_x = (world_pos.x / params.canvas_width) * 2.0 - 1.0;
     let clip_y = 1.0 - (world_pos.y / params.canvas_height) * 2.0;
 
-    // Alpha fades with temperature
-    let alpha = smoothstep(0.0, 0.15, temp);
+    // Alpha fades with temperature — smoke is very faint
+    let alpha = smoothstep(0.0, 0.1, temp) * mix(params.smoke_opacity, 1.0, t_norm);
 
     out.pos = vec4(clip_x, clip_y, 0.0, 1.0);
     out.uv = corner * 0.5 + 0.5;

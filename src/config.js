@@ -2,29 +2,29 @@
 
 const PARAM_DEFS = {
   // Emission
-  particleCount:    { value: 50000,     min: 5000,  max: 200000, step: 1000,  category: 'emission', label: 'Max Particles' },
-  emissionRate:     { value: 2000,      min: 100,   max: 10000,  step: 100,   category: 'emission', label: 'Emission Rate' },
+  particleCount:    { value: 200000,    min: 10000, max: 500000, step: 5000,  category: 'emission', label: 'Max Particles' },
+  emissionRate:     { value: 8000,      min: 500,   max: 50000,  step: 500,   category: 'emission', label: 'Emission Rate' },
   emissionWidth:    { value: 0.15,      min: 0.01,  max: 1.0,    step: 0.01,  category: 'emission', label: 'Emission Width' },
   emitterShape:     { value: 'line',                                           category: 'emission', label: 'Emitter Shape' },
   initialTemp:      { value: 1.0,       min: 0.5,   max: 2.0,    step: 0.05,  category: 'emission', label: 'Initial Temp' },
 
   // Physics
-  buoyancy:         { value: 1.5,       min: 0.1,   max: 5.0,    step: 0.1,   category: 'physics', label: 'Buoyancy' },
-  turbulence:       { value: 1.0,       min: 0.0,   max: 3.0,    step: 0.1,   category: 'physics', label: 'Turbulence' },
-  turbulenceScale:  { value: 2.0,       min: 0.5,   max: 5.0,    step: 0.1,   category: 'physics', label: 'Turb. Scale' },
-  windX:            { value: 0.0,       min: -2.0,  max: 2.0,    step: 0.1,   category: 'physics', label: 'Wind X' },
-  windY:            { value: 0.0,       min: -1.0,  max: 1.0,    step: 0.1,   category: 'physics', label: 'Wind Y' },
-  coolingRate:      { value: 0.8,       min: 0.1,   max: 3.0,    step: 0.1,   category: 'physics', label: 'Cooling Rate' },
+  buoyancy:         { value: 1.5,       min: 0.1,   max: 8.0,    step: 0.1,   category: 'physics', label: 'Buoyancy' },
+  turbulence:       { value: 1.0,       min: 0.0,   max: 5.0,    step: 0.1,   category: 'physics', label: 'Turbulence' },
+  turbulenceScale:  { value: 2.0,       min: 0.5,   max: 8.0,    step: 0.1,   category: 'physics', label: 'Turb. Scale' },
+  windX:            { value: 0.0,       min: -5.0,  max: 5.0,    step: 0.1,   category: 'physics', label: 'Wind X' },
+  windY:            { value: 0.0,       min: -3.0,  max: 3.0,    step: 0.1,   category: 'physics', label: 'Wind Y' },
+  coolingRate:      { value: 0.6,       min: 0.05,  max: 3.0,    step: 0.05,  category: 'physics', label: 'Cooling Rate' },
   drag:             { value: 0.98,      min: 0.9,   max: 1.0,    step: 0.005, category: 'physics', label: 'Drag' },
 
   // Visual
-  particleScale:    { value: 2.0,       min: 0.5,   max: 5.0,    step: 0.1,   category: 'visual', label: 'Particle Size' },
-  glowIntensity:    { value: 1.5,       min: 0.5,   max: 3.0,    step: 0.1,   category: 'visual', label: 'Glow Intensity' },
-  smokeOpacity:     { value: 0.3,       min: 0.0,   max: 1.0,    step: 0.05,  category: 'visual', label: 'Smoke Opacity' },
+  particleScale:    { value: 2.5,       min: 0.5,   max: 8.0,    step: 0.1,   category: 'visual', label: 'Particle Size' },
+  glowIntensity:    { value: 1.5,       min: 0.5,   max: 5.0,    step: 0.1,   category: 'visual', label: 'Glow Intensity' },
+  smokeOpacity:     { value: 0.4,       min: 0.0,   max: 1.0,    step: 0.05,  category: 'visual', label: 'Smoke Opacity' },
   theme:            { value: 'campfire',                                        category: 'visual', label: 'Theme' },
 
   // Interaction
-  cursorForce:      { value: 1.0,       min: 0.0,   max: 3.0,    step: 0.1,   category: 'interaction', label: 'Cursor Force' },
+  cursorForce:      { value: 1.0,       min: 0.0,   max: 5.0,    step: 0.1,   category: 'interaction', label: 'Cursor Force' },
 
   // Performance
   adaptiveParticles:{ value: true,                                              category: 'performance', label: 'Adaptive' },
@@ -71,9 +71,9 @@ export class Config {
   }
 
   /** Pack parameters into a GPU-aligned ArrayBuffer matching FireParams struct */
-  toSimParams(canvasWidth, canvasHeight, mouseX, mouseY, frameNumber, activeCount = null) {
+  toSimParams(canvasWidth, canvasHeight, mouseX, mouseY, frameNumber, activeCount = null, emitThisFrame = 0) {
     const v = this.#values;
-    // FireParams: 20 f32/u32 = 80 bytes, round up to 96 for alignment
+    // FireParams: 24 f32/u32 = 96 bytes
     const buf = new ArrayBuffer(96);
     const f32 = new Float32Array(buf);
     const u32 = new Uint32Array(buf);
@@ -98,7 +98,7 @@ export class Config {
     u32[17] = frameNumber;                      // frame_number
     f32[18] = v.emissionWidth;                  // emission_width
     f32[19] = v.initialTemp;                    // initial_temp
-    u32[20] = v.emissionRate;                   // emission_rate
+    u32[20] = emitThisFrame;                    // emission_rate (per-frame count)
     // emitter_shape: 0=line, 1=point, 2=circle
     u32[21] = v.emitterShape === 'point' ? 1 : v.emitterShape === 'circle' ? 2 : 0;
     // pad to 96 bytes

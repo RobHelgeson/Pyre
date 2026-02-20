@@ -119,12 +119,16 @@ async function main() {
       frameEncoder.rebuildBindGroups();
     }
 
+    // Compute per-frame emit count from per-second rate
+    const emitThisFrame = emitter.count(config.get('emissionRate'), 1 / 60);
+
     // Upload sim params
     const simData = config.toSimParams(
       gpu.width, gpu.height,
       input.mouseX, input.mouseY,
       frameNumber,
       activeParticleCount,
+      emitThisFrame,
     );
     buffers.uploadSimParams(simData);
 

@@ -20,11 +20,11 @@ fn vs_main(@builtin(vertex_index) vid : u32) -> VertexOut {
 
 @fragment
 fn fs_main(in : VertexOut) -> @location(0) vec4<f32> {
-    // Vertical gradient: darker at top, slightly warm at bottom
+    // Vertical gradient: very dark at top, subtle warm glow at bottom
     let t = in.uv.y;
-    let top = vec3(0.01, 0.005, 0.002);
-    let bottom = vec3(0.04, 0.018, 0.008);
-    let color = mix(top, bottom, t * t);
+    let top = vec3(0.003, 0.001, 0.001);
+    let bottom = vec3(0.025, 0.008, 0.003);
+    let color = mix(top, bottom, t * t * t);
 
     return vec4(color, 1.0);
 }
